@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kanaka Fit — Daily Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#182620; --ink-2:#1f322a; --card:#233a30; --card-2:#2a4638;
+    --accent:#d9a441; --accent-dim:#9c7830; --leaf:#8fbf6f; --leaf-dim:#5d7f4d;
+    --text:#f4efe3; --muted:#a7b3a9; --border:#33503f;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  body{margin:0;background:var(--ink);color:var(--text);font-family:'IBM Plex Sans',sans-serif;}
+  .display{font-family:'Fraunces',serif;}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+
+  .hero{
+    padding:44px 20px 36px;
+    background:
+      radial-gradient(circle at 15% -10%, rgba(217,164,65,0.18), transparent 55%),
+      radial-gradient(circle at 100% 0%, rgba(143,191,111,0.14), transparent 50%),
+      var(--ink);
+    border-bottom:1px solid var(--border);
+  }
+  .hero-inner{max-width:520px;margin:0 auto;}
+  .eyebrow{
+    display:flex; align-items:center; gap:8px;
+    font-size:12px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--leaf); margin-bottom:14px; font-weight:600;
+  }
+  .eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--leaf);display:inline-block;}
+  .hero-top{display:flex; align-items:center; gap:20px;}
+  .ring-wrap{position:relative; width:104px; height:104px; flex-shrink:0;}
+  .ring-wrap svg{transform:rotate(-90deg);}
+  .ring-track{fill:none; stroke:var(--card-2); stroke-width:8;}
+  .ring-fill{fill:none; stroke:var(--accent); stroke-width:8; stroke-linecap:round; transition:stroke-dashoffset .4s ease;}
+  .ring-label{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; flex-direction:column;}
+  .ring-pct{font-size:22px; font-weight:600; font-family:'IBM Plex Mono',monospace;}
+  .ring-sub{font-size:10px; color:var(--muted);}
+  .hero-title{font-size:26px; font-weight:600; line-height:1.15; margin:0 0 4px;}
+  .hero-sub{font-size:14px; color:var(--muted); margin:0;}
+  .day-badge{
+    display:inline-block; margin-top:14px; padding:6px 12px; border-radius:999px;
+    background:var(--card); border:1px solid var(--border); font-size:12px; color:var(--leaf);
+    font-family:'IBM Plex Mono',monospace;
+  }
+
+  .wrap{max-width:520px;margin:0 auto; padding:24px 20px 60px;}
+  .daynav{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .daynav button{
+    background:var(--card); border:1px solid var(--border); border-radius:8px;
+    padding:9px 14px; color:var(--text); font-size:13px; cursor:pointer; font-family:'IBM Plex Sans',sans-serif;
+  }
+  .daynav button:active{transform:scale(0.96);}
+  .datelabel{font-size:15px;font-weight:600;}
+
+  .section-label{
+    font-size:12px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted);
+    margin:26px 0 10px; font-weight:600;
+  }
+
+  .item{
+    display:flex; align-items:flex-start; gap:13px; padding:14px;
+    background:var(--card); border:1px solid var(--border); border-radius:12px;
+    margin-bottom:9px; cursor:pointer; transition:background .15s, border-color .15s;
+  }
+  .item.done{background:rgba(143,191,111,0.12); border-color:var(--leaf-dim);}
+  .checkbox{
+    width:21px;height:21px;border-radius:6px;border:2px solid var(--border);
+    flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;
+    font-size:13px; color:var(--ink);
+  }
+  .item.done .checkbox{background:var(--leaf);border-color:var(--leaf);}
+  .item-time{font-size:11px;color:var(--accent); font-family:'IBM Plex Mono',monospace; margin-bottom:2px;}
+  .item-title{font-size:15px;font-weight:600;margin:0 0 2px;}
+  .item.done .item-title{text-decoration:line-through;color:var(--muted);}
+  .item-sub{font-size:13px;color:var(--muted);}
+
+  .history{background:var(--card); border:1px solid var(--border); border-radius:14px; padding:18px; margin-top:14px;}
+  .hist-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .hist-row:last-child{margin-bottom:0;}
+  .hist-day{width:34px;font-size:11px;color:var(--muted); font-family:'IBM Plex Mono',monospace;}
+  .hist-track{flex:1;height:7px;border-radius:4px;background:var(--card-2);overflow:hidden;}
+  .hist-fill{height:100%;background:var(--accent);}
+  .hist-pct{width:34px;text-align:right;font-size:11px;color:var(--muted); font-family:'IBM Plex Mono',monospace;}
+
+  .footer-note{font-size:12px;color:var(--muted);margin-top:26px;text-align:center; line-height:1.6;}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="eyebrow"><span class="dot"></span>63 kg &rarr; 70 kg</div>
+    <div class="hero-top">
+      <div class="ring-wrap">
+        <svg width="104" height="104" viewBox="0 0 104 104">
+          <circle class="ring-track" cx="52" cy="52" r="44"></circle>
+          <circle class="ring-fill" id="ringFill" cx="52" cy="52" r="44" stroke-dasharray="276" stroke-dashoffset="276"></circle>
+        </svg>
+        <div class="ring-label">
+          <div class="ring-pct" id="ringPct">0%</div>
+          <div class="ring-sub">today</div>
+        </div>
+      </div>
+      <div>
+        <div class="hero-title display">Daily Tracker</div>
+        <div class="hero-sub">Muscle gain routine · Chennai</div>
+        <div class="day-badge" id="dayBadge">Day 1 of 90</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="daynav">
+    <button id="prevDay">&larr; Prev</button>
+    <div class="datelabel" id="dateLabel">Today</div>
+    <button id="nextDay">Next &rarr;</button>
+  </div>
+
+  <div class="section-label">Today's routine</div>
+  <div id="items"></div>
+
+  <div class="section-label">Last 7 days</div>
+  <div class="history">
+    <div id="historyList"></div>
+  </div>
+
+  <p class="footer-note">Data is saved on this device automatically.<br>Tap any item to mark it complete.</p>
+</div>
+
+<script>
+const workoutByDow = {0:"Rest",1:"Gym: Push A",2:"Gym: Pull A",3:"Gym: Legs A",4:"Gym: Push B",5:"Gym: Pull B",6:"Gym: Legs B"};
+const mealsByDow = {
+  1:{b:"3-egg omelette + toast + banana", l:"Rice + chicken curry + dal", d:"Chapati + fish curry"},
+  2:{b:"Oats + milk + peanut butter", l:"Rice + rajma + curd", d:"Chapati + soya curry + dal"},
+  3:{b:"Idli + sambar + boiled egg", l:"Rice + soya chunk curry + dal", d:"Chapati + egg curry"},
+  4:{b:"3-egg omelette + toast + banana", l:"Rice + chicken curry + dal", d:"Chapati + paneer bhurji"},
+  5:{b:"Oats + milk + peanut butter", l:"Rice + chole + curd", d:"Chapati + fish curry"},
+  6:{b:"Idli + sambar + boiled egg", l:"Rice + chicken curry + dal", d:"Chapati + soya curry + dal"},
+  0:{b:"3-egg omelette + toast + banana", l:"Rice + chicken/fish curry + dal", d:"Home-style dinner + curd"}
+};
+
+function buildItems(date){
+  const dow = date.getDay();
+  const wd = workoutByDow[dow];
+  const m = mealsByDow[dow];
+  const isRest = wd === "Rest";
+  const items = [
+    {id:"wake", time:"6:30 AM", title:"Wake up", sub:"Fixed time daily"},
+    {id:"breakfast", time:"7:00 AM", title:"Breakfast", sub:m.b},
+    {id:"snack1", time:"10:00 AM", title:"Mid-morning snack", sub:"Curd + roasted peanuts"},
+    {id:"lunch", time:"1:00 PM", title:"Lunch", sub:m.l}
+  ];
+  if(!isRest){
+    items.push({id:"preworkout", time:"4:30 PM", title:"Pre-workout", sub:"Banana + soaked peanuts"});
+    items.push({id:"workout", time:"5:30-6:30 PM", title:wd, sub:"6-day split, progressive overload"});
+    items.push({id:"postworkout", time:"6:45 PM", title:"Post-workout", sub:"3 boiled eggs + banana"});
+  } else {
+    items.push({id:"workout", time:"5:30 PM", title:"Rest day", sub:"Light walk or stretching"});
+  }
+  items.push({id:"dinner", time:"8:30 PM", title:"Dinner", sub:m.d});
+  items.push({id:"water", time:"All day", title:"Water intake", sub:"3.5-4 L total"});
+  items.push({id:"beforebed", time:"10:00 PM", title:"Before bed", sub:"Warm milk or curd"});
+  items.push({id:"sleep", time:"11:00 PM", title:"Sleep", sub:"7-8 hrs, consistent time"});
+  return items;
+}
+
+function fmtKey(date){ return date.toISOString().slice(0,10); }
+function fmtLabel(date){
+  const today = new Date();
+  if(fmtKey(date)===fmtKey(today)) return "Today";
+  return date.toLocaleDateString(undefined,{weekday:'short', month:'short', day:'numeric'});
+}
+
+let current = new Date();
+let startDateKey = null;
+
+// Uses browser localStorage — persists on this device/browser once hosted as a real website
+async function getStartDate(){
+  const existing = localStorage.getItem('program:start_date');
+  if(existing) return existing;
+  const todayKey = fmtKey(new Date());
+  localStorage.setItem('program:start_date', todayKey);
+  return todayKey;
+}
+
+async function getChecklist(dateKey){
+  const raw = localStorage.getItem('checklist:'+dateKey);
+  return raw ? JSON.parse(raw) : {};
+}
+async function setChecklist(dateKey, obj){
+  localStorage.setItem('checklist:'+dateKey, JSON.stringify(obj));
+}
+
+const RADIUS = 44;
+const CIRC = 2 * Math.PI * RADIUS;
+
+async function render(){
+  document.getElementById('dateLabel').textContent = fmtLabel(current);
+  const key = fmtKey(current);
+  const items = buildItems(current);
+  const state = await getChecklist(key);
+
+  if(!startDateKey) startDateKey = await getStartDate();
+  const start = new Date(startDateKey);
+  const dayNum = Math.max(1, Math.round((current - start) / 86400000) + 1);
+  document.getElementById('dayBadge').textContent = 'Day ' + Math.min(dayNum,90) + ' of 90';
+
+  const container = document.getElementById('items');
+  container.innerHTML = '';
+  items.forEach(it=>{
+    const done = !!state[it.id];
+    const div = document.createElement('div');
+    div.className = 'item' + (done ? ' done' : '');
+    div.innerHTML = `
+      <div class="checkbox">${done ? '&#10003;' : ''}</div>
+      <div>
+        <div class="item-time">${it.time}</div>
+        <div class="item-title">${it.title}</div>
+        <div class="item-sub">${it.sub}</div>
+      </div>`;
+    div.onclick = async ()=>{
+      state[it.id] = !state[it.id];
+      await setChecklist(key, state);
+      render();
+    };
+    container.appendChild(div);
+  });
+
+  const total = items.length;
+  const doneCount = items.filter(it=>state[it.id]).length;
+  const pct = total ? Math.round((doneCount/total)*100) : 0;
+  document.getElementById('ringPct').textContent = pct + '%';
+  const offset = CIRC - (pct/100)*CIRC;
+  document.getElementById('ringFill').style.strokeDashoffset = offset;
+
+  renderHistory();
+}
+
+async function renderHistory(){
+  const list = document.getElementById('historyList');
+  list.innerHTML = '';
+  for(let i=6;i>=0;i--){
+    const d = new Date();
+    d.setDate(d.getDate()-i);
+    const key = fmtKey(d);
+    const state = await getChecklist(key);
+    const items = buildItems(d);
+    const total = items.length;
+    const doneCount = items.filter(it=>state[it.id]).length;
+    const pct = total ? Math.round((doneCount/total)*100) : 0;
+    const row = document.createElement('div');
+    row.className = 'hist-row';
+    row.innerHTML = `
+      <div class="hist-day">${d.toLocaleDateString(undefined,{weekday:'short'})}</div>
+      <div class="hist-track"><div class="hist-fill" style="width:${pct}%"></div></div>
+      <div class="hist-pct">${pct}%</div>`;
+    list.appendChild(row);
+  }
+}
+
+document.getElementById('prevDay').onclick = ()=>{ current.setDate(current.getDate()-1); render(); };
+document.getElementById('nextDay').onclick = ()=>{ current.setDate(current.getDate()+1); render(); };
+
+render();
+</script>
+</body>
+</html>
